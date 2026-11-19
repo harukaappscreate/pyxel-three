@@ -37,9 +37,8 @@
 #   (split/includes/startsWith/endsWith/indexOf/slice/substring/
 #   charAt/trim/replace/repeat/padStart/...).
 #
-# Not supported (raises JSError): switch, generators, async/await,
-# getters/setters in object literals, labels, regex literals,
-# optional chaining.
+# Not supported (raises JSError): generators, getters/setters in
+# object literals, labels, optional chaining.
 
 import array
 import datetime
