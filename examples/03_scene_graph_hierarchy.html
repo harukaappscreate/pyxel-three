@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Example 03 - Scene Graph Hierarchy</title>
+    <style>
+    html, body { height: 100%; margin: 0; }
+    #c { width: 100%; height: 100%; display: block; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+  </body>
+<script type="module">
+import * as THREE from './resources/threejs/r132/build/three.module.js';
+
+function main() {
+  const canvas = document.querySelector('#c');
+  const renderer = new THREE.WebGLRenderer({canvas});
+
+  const camera = new THREE.PerspectiveCamera(50, 2, 0.1, 100);
+  camera.position.set(0, 7.5, 11.5);
+  camera.lookAt(0, 0, 0);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x090b12);
+
+  const light = new THREE.DirectionalLight(0xffffff, 1.2);
+  light.position.set(4, 8, 5);
+  scene.add(light);
+  scene.add(new THREE.AmbientLight(0x444455, 0.6));
+
+  const sphereGeo = new THREE.SphereGeometry(1, 14, 10);
+
+  const solarSystem = new THREE.Group();
+  scene.add(solarSystem);
+
+  const sun = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({color: 0xffcc33}));
+  sun.scale.set(1.8, 1.8, 1.8);
+  solarSystem.add(sun);
+
+  const earthOrbit = new THREE.Group();
+  earthOrbit.position.x = 4.2;
+  solarSystem.add(earthOrbit);
+
+  const earth = new THREE.Mesh(sphereGeo, new THREE.MeshLambertMaterial({color: 0x2288ff}));
+  earth.scale.set(0.7, 0.7, 0.7);
+  earthOrbit.add(earth);
+
+  const moonOrbit = new THREE.Group();
+  moonOrbit.position.x = 1.4;
+  earthOrbit.add(moonOrbit);
+
+  const moon = new THREE.Mesh(sphereGeo, new THREE.MeshLambertMaterial({color: 0xdddddd}));
+  moon.scale.set(0.28, 0.28, 0.28);
+  moonOrbit.add(moon);
+
+  const saturnOrbit = new THREE.Group();
+  saturnOrbit.rotation.y = Math.PI;
+  solarSystem.add(saturnOrbit);
+
+  const saturnGroup = new THREE.Group();
+  saturnGroup.position.set(6.4, 0, 0);
+  saturnOrbit.add(saturnGroup);
+
+  const saturn = new THREE.Mesh(sphereGeo, new THREE.MeshLambertMaterial({color: 0xd9b382}));
+  saturn.scale.set(0.9, 0.9, 0.9);
+  saturnGroup.add(saturn);
+
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(1.45, 0.14, 6, 20),
+    new THREE.MeshBasicMaterial({color: 0xc2a06b})
+  );
+  ring.rotation.x = Math.PI * 0.42;
+  saturnGroup.add(ring);
+
+  function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
+
+  function render(time) {
+    time *= 0.001;
+    if (resizeRendererToDisplaySize(renderer)) {
+      const canvas = renderer.domElement;
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+    solarSystem.rotation.y = time * 0.45;
+    earthOrbit.rotation.y = time * 2.2;
+    earth.rotation.y = time * 3.0;
+    saturnOrbit.rotation.y = Math.PI + time * 0.25;
+    saturnGroup.rotation.y = time * 1.1;
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+main();
+</script>
+</html>

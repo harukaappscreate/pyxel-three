@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Example 06 - OrthographicCamera, Fog, Quaternion &amp; Matrix4</title>
+    <style>
+    html, body { height: 100%; margin: 0; }
+    #c { width: 100%; height: 100%; display: block; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+  </body>
+<script type="module">
+import * as THREE from './resources/threejs/r132/build/three.module.js';
+
+function main() {
+  const canvas = document.querySelector('#c');
+  const renderer = new THREE.WebGLRenderer({canvas});
+
+  const frustumSize = 6;
+  const camera = new THREE.OrthographicCamera(
+    -frustumSize, frustumSize, frustumSize / 2, -frustumSize / 2, 0.1, 40
+  );
+  camera.position.set(0, 2.2, 9);
+  camera.lookAt(0, 0, -2);
+
+  const scene = new THREE.Scene();
+  const fogColor = 0x16202e;
+  scene.background = new THREE.Color(fogColor);
+  scene.fog = new THREE.Fog(fogColor, 6, 18);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
+  dirLight.position.set(4, 7, 5);
+  scene.add(dirLight);
+  scene.add(new THREE.AmbientLight(0x3a4a5e));
+
+  // Depth corridor of cubes to verify Fog + OrthographicCamera
+  const boxGeo = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+  const corridor = [];
+  for (let i = 0; i < 6; i++) {
+    const mat = new THREE.MeshPhongMaterial({color: i % 2 === 0 ? 0x4fc3f7 : 0xff8a65});
+    const leftBox = new THREE.Mesh(boxGeo, mat);
+    leftBox.position.set(-2.4, 0, 2 - i * 2.2);
+    scene.add(leftBox);
+    corridor.push(leftBox);
+
+    const rightBox = new THREE.Mesh(boxGeo, mat);
+    rightBox.position.set(2.4, 0, 2 - i * 2.2);
+    scene.add(rightBox);
+    corridor.push(rightBox);
+  }
+
+  // Center object driven by Quaternion.slerp + Vector3.lerp / cross / normalize
+  const centerMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(1.3, 0.6, 1.8),
+    new THREE.MeshPhongMaterial({color: 0x81c784})
+  );
+  scene.add(centerMesh);
+
+  // Orbiting marker driven by Matrix4 composition
+  const matMarker = new THREE.Mesh(
+    new THREE.ConeGeometry(0.35, 0.9, 12),
+    new THREE.MeshPhongMaterial({color: 0xffd54f})
+  );
+  scene.add(matMarker);
+
+  const vA = new THREE.Vector3(-0.8, -0.5, 0);
+  const vB = new THREE.Vector3(0.8, 0.5, 0);
+  const axis = new THREE.Vector3(1, 0, 0).cross(new THREE.Vector3(0, 1, 0.4)).normalize();
+  const qStart = new THREE.Quaternion().setFromAxisAngle(axis, 0);
+  const qEnd = new THREE.Quaternion().setFromAxisAngle(axis, Math.PI * 1.5);
+  const rotMat = new THREE.Matrix4();
+  const transMat = new THREE.Matrix4();
+  const combinedMat = new THREE.Matrix4();
+  const markerPos = new THREE.Vector3();
+
+  function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
+
+  function render(time) {
+    time *= 0.001;
+    if (resizeRendererToDisplaySize(renderer)) {
+      const canvas = renderer.domElement;
+      const aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.left = (-frustumSize * aspect) / 2;
+      camera.right = (frustumSize * aspect) / 2;
+      camera.top = frustumSize / 2;
+      camera.bottom = -frustumSize / 2;
+      camera.updateProjectionMatrix();
+    }
+
+    const alpha = 0.5 + 0.5 * Math.sin(time * 1.2);
+    centerMesh.position.copy(vA).lerp(vB, alpha);
+    centerMesh.quaternion.copy(qStart).slerp(qEnd, alpha);
+
+    rotMat.makeRotationY(time * 1.4);
+    transMat.makeTranslation(1.4, 1.3, 0);
+    combinedMat.multiplyMatrices(rotMat, transMat);
+    markerPos.set(0, 0, 0).applyMatrix4(combinedMat);
+    matMarker.position.copy(markerPos);
+    matMarker.rotation.y = time * 2.0;
+
+    corridor.forEach((b, i) => {
+      b.rotation.y = time * 0.5 + i * 0.2;
+    });
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+main();
+</script>
+</html>

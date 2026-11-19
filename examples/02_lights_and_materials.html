@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Example 02 - Lights and Materials</title>
+    <style>
+    html, body { height: 100%; margin: 0; }
+    #c { width: 100%; height: 100%; display: block; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+  </body>
+<script type="module">
+import * as THREE from './resources/threejs/r132/build/three.module.js';
+
+function main() {
+  const canvas = document.querySelector('#c');
+  const renderer = new THREE.WebGLRenderer({canvas});
+
+  const camera = new THREE.PerspectiveCamera(55, 2, 0.1, 50);
+  camera.position.set(0, 1.2, 7.2);
+  camera.lookAt(0, 0, 0);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x10131a);
+
+  const ambient = new THREE.AmbientLight(0x404060, 0.6);
+  scene.add(ambient);
+
+  const hemi = new THREE.HemisphereLight(0xb1e1ff, 0x3a2818, 0.5);
+  scene.add(hemi);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+  dirLight.position.set(3, 5, 4);
+  scene.add(dirLight);
+
+  const pointLight = new THREE.PointLight(0xff6644, 1.5, 12);
+  pointLight.position.set(0, 2, 2);
+  scene.add(pointLight);
+
+  const sphereGeo = new THREE.SphereGeometry(0.7, 16, 12);
+  const mats = [
+    new THREE.MeshBasicMaterial({color: 0x44aa88, wireframe: true}),
+    new THREE.MeshLambertMaterial({color: 0xe67e22}),
+    new THREE.MeshPhongMaterial({color: 0x3498db, shininess: 90, emissive: 0x051020}),
+    new THREE.MeshStandardMaterial({color: 0x2ecc71, roughness: 0.35, metalness: 0.4, flatShading: true}),
+    new THREE.MeshNormalMaterial({flatShading: true}),
+  ];
+
+  const objs = [];
+  mats.forEach((mat, i) => {
+    const mesh = new THREE.Mesh(sphereGeo, mat);
+    mesh.position.set((i - 2) * 1.75, 0, 0);
+    scene.add(mesh);
+    objs.push(mesh);
+  });
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(12, 6),
+    new THREE.MeshLambertMaterial({color: 0x333844, side: THREE.DoubleSide})
+  );
+  floor.rotation.x = -Math.PI * 0.5;
+  floor.position.y = -1.2;
+  scene.add(floor);
+
+  function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
+
+  function render(time) {
+    time *= 0.001;
+    if (resizeRendererToDisplaySize(renderer)) {
+      const canvas = renderer.domElement;
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+    pointLight.position.set(Math.cos(time * 1.5) * 3.2, 1.4, Math.sin(time * 1.5) * 2.5 + 1.5);
+    objs.forEach((o, i) => {
+      o.rotation.y = time * 0.8 + i;
+      o.rotation.x = time * 0.3;
+    });
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+main();
+</script>
+</html>

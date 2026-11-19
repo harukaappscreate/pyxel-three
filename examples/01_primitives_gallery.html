@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Example 01 - Primitives Gallery</title>
+    <style>
+    html, body { height: 100%; margin: 0; }
+    #c { width: 100%; height: 100%; display: block; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+  </body>
+<script type="module">
+import * as THREE from './resources/threejs/r132/build/three.module.js';
+
+function main() {
+  const canvas = document.querySelector('#c');
+  const renderer = new THREE.WebGLRenderer({canvas});
+
+  const camera = new THREE.PerspectiveCamera(60, 2, 0.1, 50);
+  camera.position.set(0, 0.4, 7.5);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x181c28);
+
+  const specs = [
+    [new THREE.BoxGeometry(1, 1, 1), 0xe74c3c],
+    [new THREE.SphereGeometry(0.65, 16, 12), 0x3498db],
+    [new THREE.CylinderGeometry(0.45, 0.45, 1.1, 16), 0x2ecc71],
+    [new THREE.ConeGeometry(0.6, 1.2, 16), 0xf1c40f],
+    [new THREE.TorusGeometry(0.52, 0.2, 10, 20), 0x9b59b6],
+    [new THREE.PlaneGeometry(1.1, 1.1), 0x1abc9c],
+    [new THREE.IcosahedronGeometry(0.68, 0), 0xe67e22],
+    [new THREE.CircleGeometry(0.65, 18), 0xecf0f1],
+  ];
+
+  const meshes = [];
+  specs.forEach(([geo, color], idx) => {
+    const mat = new THREE.MeshBasicMaterial({color, side: THREE.DoubleSide});
+    const mesh = new THREE.Mesh(geo, mat);
+    const col = idx % 4;
+    const row = Math.floor(idx / 4);
+    mesh.position.set((col - 1.5) * 2.1, (0.5 - row) * 2.1, 0);
+    scene.add(mesh);
+    meshes.push(mesh);
+  });
+
+  function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
+
+  function render(time) {
+    time *= 0.001;
+    if (resizeRendererToDisplaySize(renderer)) {
+      const canvas = renderer.domElement;
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+    meshes.forEach((m, i) => {
+      m.rotation.x = time * (0.5 + i * 0.08);
+      m.rotation.y = time * (0.7 + i * 0.06);
+    });
+    renderer.render(scene, camera);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
+
+main();
+</script>
+</html>
